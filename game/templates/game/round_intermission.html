@@ -4,7 +4,7 @@
 <div class="container">
   <h2 class="mb-4 text-center">Round Arası: Lobby {{ lobby.id }}</h2>
   
-  <!-- Show current and next round explainer -->
+  
   <p class="text-center">
     Mevcut Anlatıcı: <strong>{{ current_explainer }}</strong><br>
     Sonraki Anlatıcı: <strong>{{ next_explainer }}</strong>
@@ -81,7 +81,7 @@
       .catch(err => console.error("Error toggling round ready:", err));
   });
 
-  // Poll round readiness
+  
   function pollRoundReady(){
       fetch("{% url 'poll_round_ready' lobby.id %}")
       .then(response => response.json())
@@ -103,7 +103,7 @@
   setInterval(pollRoundReady, 1000);
   pollRoundReady();
 
-  // Update participant and team lists
+  
   function pollRoundParticipants(){
     fetch("{% url 'poll_lobby' lobby.id %}", {
       method: "GET",
