@@ -70,7 +70,7 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    // Assuming round_end is passed as a context variable (e.g., ISO string) and available in the template.
+    
     var roundEndStr = "{{ round_end|default_if_none:'' }}";
     function updateCountdown() {
       if (!roundEndStr) {
@@ -82,7 +82,7 @@
       var diff = roundEnd - now;
       if(diff <= 0) {
         document.getElementById("countdown-timer").textContent = "Süre doldu!";
-        // Optionally, trigger a poll or reload if needed.
+        
         pollGameState();
         return;
       }
@@ -105,9 +105,9 @@
           window.location.href = data.redirect;
           return;
         }
-        // Update word display:
+        
         document.getElementById("word-display").innerHTML = "<strong>Kelime:</strong> " + data.word;
-        // Update forbidden words:
+        
         var forbiddenList = document.getElementById("forbidden-list");
         forbiddenList.innerHTML = "";
         if(data.forbidden_words.length > 0) {
@@ -121,9 +121,9 @@
           li.textContent = "Yasaklı kelime bulunmamaktadır.";
           forbiddenList.appendChild(li);
         }
-        // Update score display:
+        
         document.getElementById("score-display").innerHTML = "Kırmızı Takım: " + data.red_score + " | Mavi Takım: " + data.blue_score;
-        // Update countdown string (in case round_end has been updated)
+        
         roundEndStr = data.round_end || roundEndStr;
         updateCountdown();
       })
