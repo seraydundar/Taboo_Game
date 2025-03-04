@@ -9,7 +9,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-glx&%nq6)m+s59p-5z^f289un-y0&jigosclf@jf9b2hvny*y+'
+SECRET_KEY = 'SECRET_KEY'
 DEBUG = True
 ALLOWED_HOSTS = []
 
@@ -62,11 +62,11 @@ WSGI_APPLICATION = 'tabu_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tabu_db',
-        'USER': 'postgres',
-        'PASSWORD': '1963',
-        'HOST': 'localhost',
-        'PORT': '5433',
+        'NAME': 'db_name',
+        'USER': 'db_user',
+        'PASSWORD': 'db_password',
+        'HOST': 'db_host',
+        'PORT': 'db_port',
     }
 }
 
