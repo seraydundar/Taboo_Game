@@ -42,7 +42,7 @@ ROOT_URLCONF = 'tabu_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Eğer uygulama içi templates kullanıyorsanız bu boş bırakabilirsiniz.
+        'DIRS': [],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
