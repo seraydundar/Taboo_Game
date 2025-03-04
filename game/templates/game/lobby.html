@@ -1,0 +1,181 @@
+{% extends "game/base.html" %}
+{% block title %}Lobi - Tabu Oyunu{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="mb-4 text-center">Lobi: {{ lobby.id }}</h2>
+
+  <!-- Takım Seçimi -->
+  {% if not team_selected %}
+    <div class="row">
+      <div class="col-md-12">
+        <h4>Takım Seçimi</h4>
+        <form method="post" action="{% url 'select_team' lobby.id %}">
+          {% csrf_token %}
+          <button type="submit" name="team" value="red" class="btn btn-danger">Kırmızı Takım Seç</button>
+          <button type="submit" name="team" value="blue" class="btn btn-primary">Mavi Takım Seç</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <h4 class="text-center">Kırmızı Takım (<span id="red-count">{{ lobby.red_team.count }}</span>)</h4>
+      <ul class="list-group" id="red-team-list">
+        {% for member in lobby.red_team.all %}
+          <li class="list-group-item bg-danger text-white">{{ member.username }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h4 class="text-center">Mavi Takım (<span id="blue-count">{{ lobby.blue_team.count }}</span>)</h4>
+      <ul class="list-group" id="blue-team-list">
+        {% for member in lobby.blue_team.all %}
+          <li class="list-group-item bg-primary text-white">{{ member.username }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <h4>Genel Katılımcılar</h4>
+      <ul class="list-group" id="participant-list">
+        {% for participant in participants %}
+          {% if participant in lobby.ready_players.all %}
+            <li class="list-group-item">{{ participant.username }} ✔</li>
+          {% else %}
+            <li class="list-group-item">{{ participant.username }}</li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Davet Kısmı ve Butonlar -->
+  <div class="row">
+    <div class="col-md-12 text-center">
+      {% if user.username == lobby.host.username %}
+        <div class="d-flex justify-content-center align-items-center">
+          <form id="invite-form" method="post" action="{% url 'invite_lobby' lobby.id %}" class="mr-3">
+            {% csrf_token %}
+            <div class="input-group">
+              <select id="friend-select" class="form-control" name="username">
+                {% for friend in all_friends %}
+                  <option value="{{ friend }}">{{ friend }}</option>
+                {% endfor %}
+              </select>
+              <div class="input-group-append">
+                <button type="submit" class="btn btn-info">Davet Gönder</button>
+              </div>
+            </div>
+          </form>
+          <button id="start-game-btn" class="btn btn-info">Oyuna Başla</button>
+        </div>
+      {% else %}
+        <h4>Hazır Mısınız?</h4>
+        <button id="ready-button" class="btn btn-warning">Hazırım</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Ekstra: Geri Dön Butonu -->
+  <div class="row mt-4">
+    <div class="col-md-12 text-center">
+      <a class="btn btn-secondary" href="{% url 'home' %}">Geri Dön</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Lobi ve CSRF bilgileri
+  const lobbyId = "{{ lobby.id }}";
+  const csrfToken = "{{ csrf_token }}";
+
+  // Lobi durumunu periyodik olarak güncelle
+  function pollLobby() {
+    fetch(`/poll_lobby/${lobbyId}/`, {
+      method: 'GET',
+      credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        console.error("poll_lobby error:", data.error);
+        return;
+      }
+      
+      // Katılımcı listesini güncelle
+      const participantList = document.getElementById('participant-list');
+      participantList.innerHTML = "";
+      data.participants.forEach(p => {
+        const li = document.createElement('li');
+        li.className = "list-group-item";
+        if (p.is_ready) {
+          li.textContent = p.username + " ✔";
+        } else {
+          li.textContent = p.username;
+        }
+        participantList.appendChild(li);
+      });
+      // Takım sayılarını güncelle
+      document.getElementById('red-count').textContent = data.red_count;
+      document.getElementById('blue-count').textContent = data.blue_count;
+      
+      // Tüm oyuncular hazırsa, round_intermission ekranına yönlendirilsin
+      if (data.status === "all_ready") {
+        window.location.href = data.redirect;
+      }
+    })
+    .catch(err => console.error("pollLobby fetch error:", err));
+  }
+  setInterval(pollLobby, 1000);
+  pollLobby();
+
+  // Non-host users: Hazırım butonu
+  if (document.getElementById('ready-button')) {
+    document.getElementById('ready-button').addEventListener('click', function() {
+      fetch(`/toggle_ready/${lobbyId}/`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        }
+        else if (data.status === 'waiting') {
+          console.log("Hazır durumu güncellendi.");
+        }
+        else if (data.status === 'all_ready') {
+          // Herkes hazırsa bu kullanıcı da round_intermission'a gitsin
+          window.location.href = data.redirects["{{ user.username }}"];
+        }
+      })
+      .catch(err => console.error("toggle_ready fetch error:", err));
+    });
+  }
+
+  // Host user: Oyuna Başla butonu
+  if (document.getElementById('start-game-btn')) {
+    document.getElementById('start-game-btn').addEventListener('click', function() {
+      fetch(`/start_game/${lobbyId}/`, {
+        method: 'GET',
+        credentials: 'same-origin'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          window.location.href = data.redirect;
+        }
+      })
+      .catch(err => console.error("start_game fetch error:", err));
+    });
+  }
+</script>
+{% endblock %}

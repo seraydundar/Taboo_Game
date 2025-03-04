@@ -1,0 +1,142 @@
+{% extends "game/base.html" %}
+{% block title %}Round Arası{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="mb-4 text-center">Round Arası: Lobby {{ lobby.id }}</h2>
+  
+  <!-- Show current and next round explainer -->
+  <p class="text-center">
+    Mevcut Anlatıcı: <strong>{{ current_explainer }}</strong><br>
+    Sonraki Anlatıcı: <strong>{{ next_explainer }}</strong>
+  </p>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <h4 class="text-center">Kırmızı Takım (<span id="red-count">{{ lobby.red_team.count }}</span>)</h4>
+      <ul class="list-group" id="red-team-list">
+        {% for member in lobby.red_team.all %}
+          <li class="list-group-item bg-danger text-white">{{ member.username }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h4 class="text-center">Mavi Takım (<span id="blue-count">{{ lobby.blue_team.count }}</span>)</h4>
+      <ul class="list-group" id="blue-team-list">
+        {% for member in lobby.blue_team.all %}
+          <li class="list-group-item bg-primary text-white">{{ member.username }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <h4>Genel Katılımcılar</h4>
+      <ul class="list-group" id="participant-list">
+        {% for participant in lobby.participants.all %}
+          {% if participant in lobby.round_ready_players.all %}
+            <li class="list-group-item">{{ participant.username }} ✔</li>
+          {% else %}
+            <li class="list-group-item">{{ participant.username }}</li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="text-center mt-4">
+    <p>Toplam oyuncu: {{ total_players }} - Hazır olan: <span id="ready-count">{{ ready_count }}</span></p>
+    <button id="ready-btn" class="btn btn-primary">Hazırım</button>
+    <p id="countdown-msg" style="font-weight: bold; color: green;"></p>
+  </div>
+</div>
+
+<script>
+  var countdownStarted = false;
+  var countdownTimer = 5; // 5 saniyelik geri sayım
+  var countdownInterval;
+
+  // Hazır butonuna tıklama
+  document.getElementById("ready-btn").addEventListener("click", function(){
+      fetch("{% url 'toggle_round_ready' lobby.id %}", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+              "X-CSRFToken": "{{ csrf_token }}"
+          }
+      })
+      .then(response => response.json())
+      .then(data => {
+          if(data.status === "all_ready"){
+              if(!countdownStarted) {
+                  startCountdown();
+              }
+          } else {
+              countdownStarted = false;
+              clearInterval(countdownInterval);
+              document.getElementById("countdown-msg").textContent = "";
+              document.getElementById("ready-count").textContent = data.ready_count;
+          }
+      })
+      .catch(err => console.error("Error toggling round ready:", err));
+  });
+
+  // Poll round readiness
+  function pollRoundReady(){
+      fetch("{% url 'poll_round_ready' lobby.id %}")
+      .then(response => response.json())
+      .then(data => {
+          if(data.all_ready){
+              if(!countdownStarted){
+                  startCountdown();
+              }
+          } else {
+              countdownStarted = false;
+              clearInterval(countdownInterval);
+              document.getElementById("countdown-msg").textContent = "";
+              document.getElementById("ready-count").textContent = data.ready_count;
+          }
+          pollRoundParticipants();
+      })
+      .catch(err => console.error("Error polling round readiness:", err));
+  }
+  setInterval(pollRoundReady, 1000);
+  pollRoundReady();
+
+  // Update participant and team lists
+  function pollRoundParticipants(){
+    fetch("{% url 'poll_lobby' lobby.id %}", {
+      method: "GET",
+      credentials: "same-origin"
+    })
+    .then(response => response.json())
+    .then(data => {
+      var participantList = document.getElementById('participant-list');
+      participantList.innerHTML = "";
+      data.participants.forEach(p => {
+        var li = document.createElement('li');
+        li.className = "list-group-item";
+        li.textContent = p.username + (p.is_ready ? " ✔" : "");
+        participantList.appendChild(li);
+      });
+      document.getElementById('red-count').textContent = data.red_count;
+      document.getElementById('blue-count').textContent = data.blue_count;
+    })
+    .catch(err => console.error("Error polling participants:", err));
+  }
+
+  function startCountdown(){
+      countdownStarted = true;
+      countdownTimer = 5;
+      countdownInterval = setInterval(function(){
+          document.getElementById("countdown-msg").textContent =
+            "Tüm oyuncular hazır, oyun " + countdownTimer + " saniye sonra başlayacak.";
+          countdownTimer--;
+          if(countdownTimer < 0){
+              clearInterval(countdownInterval);
+              window.location.href = "/game_view/{{ lobby.id }}/";
+          }
+      }, 1000);
+  }
+</script>
+{% endblock %}

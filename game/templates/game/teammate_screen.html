@@ -1,0 +1,84 @@
+{% extends "game/base.html" %}
+{% block title %}Takım Arkadaşı{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center">
+        <h2>Takım Arkadaşı Ekranı</h2>
+
+        <!-- Tahmin Formu -->
+        <form method="post" action="{% url 'game_view' lobby.id %}">
+            {% csrf_token %}
+            <input type="text" name="guess" placeholder="Tahmininiz">
+            <button class="btn btn-primary">Tahmin Et</button>
+        </form>
+
+        <!-- Dinamik süre gösterimi -->
+        <div id="countdown-timer" style="font-size: 2rem; text-align: center; margin-top: 20px;"></div>
+
+        <div style="margin-top:20px;">
+            <h5>Skor Durumu</h5>
+            <p id="score-display">Kırmızı Takım: {{ red_score }} | Mavi Takım: {{ blue_score }}</p>
+        </div>
+
+        <!-- Oyundan Çık Butonu -->
+        <a class="btn btn-secondary mt-3" href="{% url 'leave_game' lobby.id %}">
+            Oyundan Çık
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // The round_end value is passed from the view.
+    var roundEndStr = "{{ round_end|default_if_none:'' }}";
+
+    function updateCountdown() {
+        if (!roundEndStr) {
+            document.getElementById("countdown-timer").textContent = "Süre bilgisi bulunamadı.";
+            return;
+        }
+        var roundEnd = new Date(roundEndStr);
+        var now = new Date();
+        var diff = roundEnd - now;
+        if (diff <= 0) {
+            document.getElementById("countdown-timer").textContent = "Süre doldu!";
+            pollGameState(); // Force a poll on timeout.
+            return;
+        }
+        var totalSec = Math.floor(diff / 1000);
+        var minutes = Math.floor(totalSec / 60);
+        var seconds = totalSec % 60;
+        if (minutes < 10) minutes = "0" + minutes;
+        if (seconds < 10) seconds = "0" + seconds;
+        document.getElementById("countdown-timer").textContent = "Kalan Süre: " + minutes + ":" + seconds;
+    }
+
+    function pollGameState() {
+        fetch("{% url 'poll_game_state' lobby.id %}", {
+            method: "GET",
+            credentials: "same-origin"
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === "round_ended") {
+                window.location.href = data.redirect;
+                return;
+            }
+            // Update score display dynamically.
+            document.getElementById("score-display").innerHTML = "Kırmızı Takım: " + data.red_score + " | Mavi Takım: " + data.blue_score;
+            // If round_end has changed on the server, update our local variable.
+            if(data.round_end) {
+                roundEndStr = data.round_end;
+            }
+            updateCountdown();
+        })
+        .catch(err => console.error("Error polling game state:", err));
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    setInterval(pollGameState, 1000);
+    pollGameState();
+});
+</script>
+{% endblock %}

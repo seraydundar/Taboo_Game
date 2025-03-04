@@ -1,0 +1,11 @@
+<!-- game/templates/game/home_no_lobby.html -->
+{% extends "game/base.html" %}
+{% block title %}Ana Sayfa - Tabu Oyunu{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Hoş Geldiniz, {{ user.username }}!</h2>
+    <p>Henüz bir lobiye katılmadınız veya oluşturmadınız.</p>
+    <p>Burada "Yeni Lobi Aç" butonu vb. yer alabilir.</p>
+    <a class="btn btn-primary" href="{% url 'new_lobby' %}">Yeni Lobi Aç</a>
+</div>
+{% endblock %}

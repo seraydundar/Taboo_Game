@@ -1,0 +1,140 @@
+{% extends "game/base.html" %}
+{% block title %}Rakip Takım{% endblock %}
+{% block content %}
+<!-- Yasaklı kelimeler kutusu için stil -->
+<style>
+  .forbidden-box {
+    background-color: #e0f7fa;  /* Açık mavi ton */
+    padding: 8px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .forbidden-box h4 {
+    margin: 0 0 5px;
+    font-size: 1rem;
+    color: #000;
+    border-bottom: 1px solid #000;
+    padding-bottom: 5px;
+    text-align: center;
+  }
+  .forbidden-box ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 0;
+    text-align: center;
+  }
+  .forbidden-box li {
+    margin-bottom: 3px;
+    color: #000;
+    text-align: center;
+  }
+</style>
+
+<div class="row">
+  <div class="col-md-12 text-center">
+    <h2>Rakip Takım Ekranı</h2>
+    <p id="word-display"><strong>Kelime:</strong> {{ word }}</p>
+    
+    <!-- Yasaklı Kelimeler Kutucuğu -->
+    <div class="forbidden-box">
+      <h4>Yasaklı Kelimeler</h4>
+      <ul id="forbidden-list">
+        {% for kelime in forbidden_words %}
+          <li>{{ kelime }}</li>
+        {% empty %}
+          <li>Yasaklı kelime bulunmamaktadır.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    
+    <form method="post" action="{% url 'game_view' lobby.id %}">
+      {% csrf_token %}
+      <button type="submit" name="tabu" class="btn btn-danger">Tabu</button>
+    </form>
+      
+    <div style="margin-top:20px;">
+      <h5>Skor Durumu</h5>
+      <p id="score-display">Kırmızı Takım: {{ red_score }} | Mavi Takım: {{ blue_score }}</p>
+    </div>
+    
+    <!-- Kalan süre göstergesi -->
+    <div id="countdown-timer" style="font-size: 2rem; text-align: center; margin-top: 20px;"></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Assuming round_end is passed as a context variable (e.g., ISO string) and available in the template.
+    var roundEndStr = "{{ round_end|default_if_none:'' }}";
+    function updateCountdown() {
+      if (!roundEndStr) {
+        document.getElementById("countdown-timer").textContent = "Süre bilgisi yok";
+        return;
+      }
+      var roundEnd = new Date(roundEndStr);
+      var now = new Date();
+      var diff = roundEnd - now;
+      if(diff <= 0) {
+        document.getElementById("countdown-timer").textContent = "Süre doldu!";
+        // Optionally, trigger a poll or reload if needed.
+        pollGameState();
+        return;
+      }
+      var totalSec = Math.floor(diff / 1000);
+      var minutes = Math.floor(totalSec / 60);
+      var seconds = totalSec % 60;
+      if (minutes < 10) { minutes = "0" + minutes; }
+      if (seconds < 10) { seconds = "0" + seconds; }
+      document.getElementById("countdown-timer").textContent = "Kalan Süre: " + minutes + ":" + seconds;
+    }
+    
+    function pollGameState() {
+      fetch("{% url 'poll_game_state' lobby.id %}", {
+        method: "GET",
+        credentials: "same-origin"
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.status === "round_ended") {
+          window.location.href = data.redirect;
+          return;
+        }
+        // Update word display:
+        document.getElementById("word-display").innerHTML = "<strong>Kelime:</strong> " + data.word;
+        // Update forbidden words:
+        var forbiddenList = document.getElementById("forbidden-list");
+        forbiddenList.innerHTML = "";
+        if(data.forbidden_words.length > 0) {
+          data.forbidden_words.forEach(function(word) {
+            var li = document.createElement("li");
+            li.textContent = word;
+            forbiddenList.appendChild(li);
+          });
+        } else {
+          var li = document.createElement("li");
+          li.textContent = "Yasaklı kelime bulunmamaktadır.";
+          forbiddenList.appendChild(li);
+        }
+        // Update score display:
+        document.getElementById("score-display").innerHTML = "Kırmızı Takım: " + data.red_score + " | Mavi Takım: " + data.blue_score;
+        // Update countdown string (in case round_end has been updated)
+        roundEndStr = data.round_end || roundEndStr;
+        updateCountdown();
+      })
+      .catch(err => console.error("Error polling game state:", err));
+    }
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    setInterval(pollGameState, 1000);
+    pollGameState();
+  });
+  document.getElementById("score-display").innerHTML = "Kırmızı Takım: " + data.red_score + " | Mavi Takım: " + data.blue_score;
+</script>
+{% endblock %}

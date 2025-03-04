@@ -1,0 +1,160 @@
+{% extends "game/base.html" %}
+{% block title %}Anlatıcı Ekranı{% endblock %}
+
+{% block content %}
+<audio id="tick-sound" src="/static/game/clock-tick-101150.mp3" preload="auto"></audio>
+<!-- Yasaklı Kelimeler kutusu için stil -->
+<style>
+  .forbidden-box {
+    background-color: #e0f7fa;  /* Açık mavi ton */
+    padding: 8px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    max-width: 300px;  /* Kutucuk genişliği */
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .forbidden-box h4 {
+    margin: 0 0 5px;
+    font-size: 1rem;
+    color: #000;
+    border-bottom: 1px solid #000;
+    padding-bottom: 5px;
+    text-align: center;
+  }
+  .forbidden-box ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 0;
+    text-align: center;
+  }
+  .forbidden-box li {
+    margin-bottom: 3px;
+    color: #000;
+    text-align: center;
+  }
+</style>
+
+<div class="row">
+    <div class="col-md-12 text-center">
+        <h2>Anlatıcı Ekranı</h2>
+        <p id="word-display"><strong>Kelime:</strong> {{ word }}</p>
+        
+        <!-- Yasaklı Kelimeler Kutucuğu -->
+        <div id="forbidden-box" class="forbidden-box">
+          <h4>Yasaklı Kelimeler</h4>
+          <ul id="forbidden-list">
+            {% for kelime in forbidden_words %}
+              <li>{{ kelime }}</li>
+            {% empty %}
+              <li>Yasaklı kelime bulunmamaktadır.</li>
+            {% endfor %}
+          </ul>
+        </div>
+        
+        <!-- Pas / Doğru Cevap Butonları -->
+        <form method="post" action="{% url 'game_view' lobby.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button class="btn btn-warning" name="pas">Pas</button>
+            <button class="btn btn-success" name="dogru">Doğru Cevap</button>
+        </form>
+
+        <!-- Dinamik Süre Göstergesi -->
+        <div id="countdown-timer" style="font-size: 2rem; text-align: center; margin-top: 20px;">
+            {% if round_end %}Kalan Süre: {{ round_end|date:"i:s" }}{% else %}Süre bilgisi yok{% endif %}
+        </div>
+
+        <div style="margin-top:20px;">
+            <h5>Skor Durumu</h5>
+            <p id="score-display">Kırmızı Takım: {{ red_score }} | Mavi Takım: {{ blue_score }}</p>
+        </div>
+
+        <!-- Oyundan Çık Butonu -->
+        <a class="btn btn-secondary mt-3" href="{% url 'leave_game' lobby.id %}">
+            Oyundan Çık
+        </a>
+    </div>
+</div>
+
+<script>
+   function updateGameState() {
+  fetch("{% url 'poll_game_state' lobby.id %}", {
+    method: "GET",
+    credentials: "same-origin"
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Eğer round sona ermişse yönlendir
+    if(data.status === "round_ended") {
+      window.location.href = data.redirect;
+      return;
+    }
+    
+    // Kelimeyi güncelle:
+    document.getElementById("word-display").innerHTML = "<strong>Kelime:</strong> " + data.word;
+    
+    // Yasaklı kelimeler kutusunu güncelle:
+    var forbiddenList = document.getElementById("forbidden-list");
+    forbiddenList.innerHTML = "";
+    if(data.forbidden_words.length > 0) {
+      data.forbidden_words.forEach(function(word) {
+        var li = document.createElement("li");
+        li.textContent = word;
+        forbiddenList.appendChild(li);
+      });
+    } else {
+      var li = document.createElement("li");
+      li.textContent = "Yasaklı kelime bulunmamaktadır.";
+      forbiddenList.appendChild(li);
+    }
+    
+    // Skoru güncelle:
+    document.getElementById("score-display").innerHTML = "Kırmızı Takım: " + data.red_score + " | Mavi Takım: " + data.blue_score;
+    
+    // Countdown timer güncellemesi:
+    var tickAudio = document.getElementById("tick-sound");
+    if(data.round_end) {
+      var roundEnd = new Date(data.round_end);
+      var now = new Date();
+      var diff = roundEnd - now;
+      if(diff > 0) {
+        var totalSec = Math.floor(diff / 1000);
+        var minutes = Math.floor(totalSec / 60);
+        var seconds = totalSec % 60;
+        if(minutes < 10) minutes = "0" + minutes;
+        if(seconds < 10) seconds = "0" + seconds;
+        document.getElementById("countdown-timer").textContent = "Kalan Süre: " + minutes + ":" + seconds;
+        // Kalan süre 10 saniyeden azsa tick sesi çalsın:
+        if(diff < 10000) {
+          if(tickAudio.paused) {
+            tickAudio.loop = true;
+            tickAudio.play();
+          }
+        } else {
+          tickAudio.pause();
+          tickAudio.currentTime = 0;
+        }
+      } else {
+        document.getElementById("countdown-timer").textContent = "Süre doldu!";
+        tickAudio.pause();
+        tickAudio.currentTime = 0;
+      }
+    } else {
+      // Eğer round_end değeri mevcut değilse, "Süre bilgisi yok" yazısı gösterilsin.
+      document.getElementById("countdown-timer").textContent = "Süre bilgisi yok";
+      tickAudio.pause();
+      tickAudio.currentTime = 0;
+    }
+  })
+  .catch(err => console.error("Error polling game state:", err));
+}
+  
+setInterval(updateGameState, 1000);
+updateGameState();
+
+</script>
+  
+{% endblock %}

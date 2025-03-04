@@ -1,0 +1,21 @@
+{% extends "game/base.html" %}
+{% block title %}Oyun Bitti{% endblock %}
+{% block content %}
+<div class="game-over-container">
+  <h1>Oyun Bitti!</h1>
+  <p>Final Skorlar (Güncel):</p>
+  
+  <div style="margin-top:20px;">
+    <h5>Skor Durumu</h5>
+    <p id="score-display">Kırmızı Takım: {{ red_score }} | Mavi Takım: {{ blue_score }}</p>
+  </div>
+  
+  {% if winner == "Berabere" %}
+    <p>Oyun Berabere Bitti!</p>
+  {% else %}
+    <p>Kazanan: <strong>{{ winner }}</strong></p>
+  {% endif %}
+  
+  <a href="{% url 'home' %}" class="btn btn-primary">Ana Sayfaya Dön</a>
+</div>
+{% endblock %}

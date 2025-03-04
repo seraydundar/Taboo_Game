@@ -1,0 +1,15 @@
+{% extends "game/base.html" %}
+{% block title %}Giriş Yap - Tabu Oyunu{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4 text-center">Giriş Yap</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary btn-block">Giriş Yap</button>
+        </form>
+        <p class="mt-3 text-center">Hesabın yok mu? <a href="{% url 'register' %}">Kayıt Ol</a></p>
+    </div>
+</div>
+{% endblock %}

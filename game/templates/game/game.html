@@ -1,0 +1,61 @@
+{% extends "game/base.html" %}
+{% block title %}Oyun{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4 text-center">Oyun Ekranı</h2>
+    </div>
+</div>
+<div class="row">
+    <!-- Anlatıcı Bölümü -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                Anlatıcı
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Kelime: <span id="game-word">Örnek Kelime</span></h5>
+                <p class="card-text">Yasaklı Kelimeler: <span id="forbidden-words">kelime1, kelime2</span></p>
+                <button class="btn btn-warning">Pas Kullan (3 Kalan)</button>
+            </div>
+        </div>
+    </div>
+    <!-- Takım Arkadaşları Bölümü -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                Takım Arkadaşları
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item">Oyuncu 1</li>
+                    <li class="list-group-item">Oyuncu 2</li>
+                    <li class="list-group-item">Oyuncu 3</li>
+                </ul>
+                <div class="mt-3">
+                    <input type="text" class="form-control" placeholder="Tahmin et">
+                    <button class="btn btn-primary btn-block mt-2">Tahmin Et</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Rakip Takım Bölümü -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                Rakip Takım
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item">Rakip 1</li>
+                    <li class="list-group-item">Rakip 2</li>
+                    <li class="list-group-item">Rakip 3</li>
+                </ul>
+                <div class="mt-3 text-center">
+                    <button class="btn btn-danger">Tabu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

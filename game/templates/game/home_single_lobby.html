@@ -1,0 +1,17 @@
+{% extends "game/base.html" %}
+{% block title %}Ana Sayfa - Tabu Oyunu{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Hoş Geldiniz, {{ user.username }}!</h2>
+    <!-- Kullanıcı zaten tek bir lobiye sahiptir veya katılmıştır -->
+    <p>Bulunduğunuz Lobi: #{{ lobby.id }}</p>
+    <p>Katılımcı sayısı: {{ lobby.participants.count }}</p>
+    <div>
+        <!-- Lobiye Git ve Lobiden Çık butonları -->
+        <a class="btn btn-sm btn-success" href="{% url 'lobby' lobby.id %}">Lobiye Git</a>
+        <a class="btn btn-sm btn-warning" href="{% url 'leave_lobby' lobby.id %}">Lobiden Çık</a>
+    </div>
+</div>
+{% endblock %}
+
+

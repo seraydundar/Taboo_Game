@@ -1,0 +1,19 @@
+<!-- new_explainer.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Yeni Anlatıcı</title>
+    <!-- 5 saniye sonra round_intermission'a gitmek için JS -->
+    <script>
+      setTimeout(function() {
+          window.location.href = "{% url 'round_intermission' lobby.id %}";
+      }, 5000);
+    </script>
+</head>
+<body>
+    <h1>Yeni Anlatıcı Seçildi</h1>
+    <p>Sıradaki anlatıcı: <strong>{{ new_explainer.username }}</strong></p>
+    <p>5 saniye sonra otomatik olarak bir sonraki ekrana geçilecektir.</p>
+</body>
+</html>

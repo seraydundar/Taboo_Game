@@ -1,0 +1,45 @@
+{% extends "game/base.html" %}
+{% block title %}Ana Sayfa - Tabu Oyunu{% endblock %}
+{% block content %}
+<div class="container">
+    {% if user.is_authenticated %}
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Hoş Geldiniz, {{ user.username }}!</h2>
+                <!-- Yeni Lobi Aç Butonu -->
+                <a class="btn btn-primary" href="{% url 'new_lobby' %}">Yeni Lobi Aç</a>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <h4>Katıldığınız Lobiler</h4>
+                <ul class="list-group">
+                    {% for lobby in user_lobbies %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Lobby #{{ lobby.id }} - Katılımcı sayısı: {{ lobby.participants.count }}
+                            <div>
+                                <a class="btn btn-sm btn-success" href="{% url 'lobby' lobby.id %}">Lobiye Git</a>
+                                <a class="btn btn-sm btn-warning" href="{% url 'leave_lobby' lobby.id %}">Lobiden Çık</a>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">Henüz hiçbir lobiye katılmadınız.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="jumbotron text-center">
+                    <h1 class="display-4">Tabu Oyunu'na Hoşgeldiniz!</h1>
+                    <p class="lead">Oyuna başlamadan önce lütfen giriş yapın veya kayıt olun.</p>
+                    <hr class="my-4">
+                    <a class="btn btn-primary btn-lg" href="{% url 'login' %}" role="button">Giriş Yap</a>
+                    <a class="btn btn-success btn-lg" href="{% url 'register' %}" role="button">Kayıt Ol</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

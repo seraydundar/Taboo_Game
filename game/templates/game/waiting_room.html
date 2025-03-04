@@ -1,0 +1,28 @@
+{% extends "game/base.html" %}
+{% block title %}Waiting Room{% endblock %}
+{% block content %}
+<div class="container text-center">
+  <h2>Waiting Room</h2>
+  <p>Oyun başlamak için diğer oyuncuların hazır olmasını bekliyorsunuz...</p>
+</div>
+<script>
+  const lobbyId = "{{ lobby.id }}";
+  // Polling fonksiyonu: Her 1 saniyede poll_lobby endpoint'ini sorguluyoruz
+  function pollLobby() {
+    fetch(`/poll_lobby/${lobbyId}/`, {
+      method: 'GET',
+      credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Eğer tüm oyuncular hazırsa ve yönlendirme bilgisi varsa, sayfayı yönlendir
+      if(data.status === "all_ready" && data.redirects) {
+        window.location.href = data.redirects["{{ user.username }}"];
+      }
+    })
+    .catch(err => console.error("pollLobby error:", err));
+  }
+  setInterval(pollLobby, 1000);
+  pollLobby();
+</script>
+{% endblock %}

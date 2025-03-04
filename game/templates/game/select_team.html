@@ -1,0 +1,13 @@
+{% extends "game/base.html" %}
+{% block title %}Takım Seçimi - Lobi{% endblock %}
+{% block content %}
+<div class="container">
+    <h2>Lobi: {{ lobby.id }}</h2>
+    <p>Lütfen bir takım seçiniz:</p>
+    <form method="post" action="{% url 'select_team' lobby.id %}">
+        {% csrf_token %}
+        <button type="submit" name="team" value="red" class="btn btn-danger">Kırmızı Takım</button>
+        <button type="submit" name="team" value="blue" class="btn btn-primary">Mavi Takım</button>
+    </form>
+</div>
+{% endblock %}
