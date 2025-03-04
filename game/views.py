@@ -22,9 +22,9 @@ from .models import (
     Oyuncu
 )
 
-##############################
+
 # 1. UTILITY & DECORATOR FONKSİYONLARI
-##############################
+
 
 def app_endpoint():
     endpoint_url = "http://127.0.0.1:8000/app_update/"
@@ -41,9 +41,9 @@ def update_app(view_func):
         return response
     return _wrapped_view
 
-##############################
+
 # 2. KULLANICI YÖNETİMİ (AUTHENTICATION)
-##############################
+
 
 @update_app
 def register_view(request):
@@ -87,9 +87,9 @@ def custom_logout(request):
     logout(request)
     return redirect('home')
 
-##############################
+
 # 3. LOBİ (ODA) KONTROLLERİ
-##############################
+
 
 @update_app
 def home_view(request):
@@ -110,7 +110,6 @@ def new_lobby(request):
         return redirect('home')
     lobby = Lobby.objects.create(host=request.user)
     lobby.participants.add(request.user)
-    # Do not assign current_explainer here; start_game will choose one.
     lobby.current_explainer = None
     lobby.explainer_history = []
     messages.info(request, "Yeni lobi oluşturuldu.")
@@ -193,9 +192,9 @@ def select_team(request, lobby_id):
     else:
         return render(request, "game/select_team.html", {"lobby": lobby})
 
-##############################
+
 # 4. OYUN (GAME) KONTROLLERİ
-##############################
+
 
 def get_random_kelime(current_word=None):
     kelimeler = list(Kelime.objects.all())
@@ -230,7 +229,7 @@ def start_game(request, lobby_id):
     if participants:
         chosen = random.choice(participants)
         lobby.current_explainer = chosen
-        lobby.explainer_history = []  # Reset history at game start.
+        lobby.explainer_history = []  
         lobby.save()
     else:
         return JsonResponse({'error': 'Oyuncu yok!'}, status=400)
@@ -262,10 +261,10 @@ def get_next_explainer(lobby):
 def handle_round_end(request, lobby):
     now = timezone.now()
     if lobby.round_end and now >= lobby.round_end:
-        # Initialize history if needed.
+        
         if lobby.explainer_history is None:
             lobby.explainer_history = []
-        # Add current explainer to history if not already added.
+        
         if lobby.current_explainer and lobby.current_explainer.id not in lobby.explainer_history:
             lobby.explainer_history.append(lobby.current_explainer.id)
         next_explainer = get_next_explainer(lobby)
@@ -461,11 +460,11 @@ def handle_round_end(request, lobby):
 @update_app
 def round_intermission(request, lobby_id):
     lobby = get_object_or_404(Lobby, id=lobby_id)
-    # Call the rotation logic so that if time is up, current_explainer gets updated.
+   
     res = handle_round_end(request, lobby)
     if res:
         return res
-    # Continue with intermission display
+    
     lobby.round_ready_players.clear()
     lobby.save()
     next_explainer = get_next_explainer(lobby)
@@ -473,7 +472,7 @@ def round_intermission(request, lobby_id):
         "lobby": lobby,
         "current_explainer": lobby.current_explainer.username if lobby.current_explainer else "Bilinmiyor",
         "next_explainer": next_explainer.username if next_explainer else "Oyun Sonu",
-        # If you want to show the remaining eligible queue, you can compute it here.
+        
         "ready_count": lobby.round_ready_players.count(),
         "total_players": lobby.participants.count(),
         "is_host": (request.user == lobby.host),
@@ -582,9 +581,9 @@ def leave_game(request, lobby_id):
         messages.info(request, "Oyundan çıktınız.")
     return redirect('home')
 
-##############################
+
 # 5. SOSYAL İŞLEMLER (ARKADAŞLIK & BİLDİRİMLER)
-##############################
+
 
 @update_app
 def accept_request(request, request_id):
@@ -695,16 +694,10 @@ def game_over(request):
     })
 
 
-
-
-
-
-
-
 @update_app
 def toggle_ready(request, lobby_id):
     lobby = get_object_or_404(Lobby, id=lobby_id)
-    # If the user hasn't chosen a team, they cannot toggle ready.
+    
     if request.user not in lobby.red_team.all() and request.user not in lobby.blue_team.all():
         return JsonResponse({'error': 'Lütfen önce bir takım seçin.'}, status=400)
     
@@ -715,11 +708,11 @@ def toggle_ready(request, lobby_id):
         lobby.ready_players.add(request.user)
         is_ready = True
 
-    # Check if every participant is ready.
+    
     participants = list(lobby.participants.all())
     all_ready = all(player in lobby.ready_players.all() for player in participants)
     if all_ready:
-        # Build redirects based on the new rotation.
+        
         redirects = {}
         for player in participants:
             if player == lobby.current_explainer:
