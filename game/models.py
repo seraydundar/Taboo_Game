@@ -90,7 +90,7 @@ class Lobby(models.Model):
     ready_players = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="ready_in_lobbies", blank=True)
     current_explainer = models.ForeignKey('Oyuncu', on_delete=models.SET_NULL, null=True, blank=True, related_name="current_explainer_lobbies")
     explainer_history = models.JSONField(default=list, blank=True)
-    explainer_queue = models.JSONField(default=list, blank=True)  # NEW OR UPDATED FIELD
+    explainer_queue = models.JSONField(default=list, blank=True)  
     created_at = models.DateTimeField(auto_now_add=True)
     round_end = models.DateTimeField(null=True, blank=True)
     round_ready_players = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="round_ready_in_lobbies", blank=True)
