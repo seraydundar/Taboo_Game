@@ -29,7 +29,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // The round_end value is passed from the view.
+   
     var roundEndStr = "{{ round_end|default_if_none:'' }}";
 
     function updateCountdown() {
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function() {
         var diff = roundEnd - now;
         if (diff <= 0) {
             document.getElementById("countdown-timer").textContent = "Süre doldu!";
-            pollGameState(); // Force a poll on timeout.
+            pollGameState(); 
             return;
         }
         var totalSec = Math.floor(diff / 1000);
@@ -64,9 +64,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 window.location.href = data.redirect;
                 return;
             }
-            // Update score display dynamically.
+            
             document.getElementById("score-display").innerHTML = "Kırmızı Takım: " + data.red_score + " | Mavi Takım: " + data.blue_score;
-            // If round_end has changed on the server, update our local variable.
+            
             if(data.round_end) {
                 roundEndStr = data.round_end;
             }
